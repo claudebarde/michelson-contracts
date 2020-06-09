@@ -1,0 +1,10 @@
+## Saves a string pushed to the stack in the storage
+
+parameter unit ;
+storage string ;
+code {
+    DROP ;
+    PUSH string "Hello world" ;
+    NIL operation ;
+    PAIR
+}
