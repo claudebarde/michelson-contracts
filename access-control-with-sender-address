@@ -1,0 +1,18 @@
+## Verifies if transaction is allowed by comparing sender's address against address in storage
+
+parameter string ;
+storage (pair address string) ;
+code {
+    DUP ;
+    CAR ;
+    DIP { CDR ; DUP ; CDR } ;
+    DIG 2 ;
+    CAR ;
+    DUP ;
+    SENDER ;
+    IFCMPEQ {} { FAIL } ;
+    DIP { SWAP ; CONCAT } ;
+    PAIR ;
+    NIL operation ;
+    PAIR
+}
