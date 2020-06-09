@@ -1,0 +1,13 @@
+## Concatenates two strings, one from storage, one from parameter and saves it in the storage
+
+parameter string ;
+storage string ;
+code {
+    DUP ;
+    CAR ;
+    SWAP ;
+    CDR ;
+    CONCAT ;
+    NIL operation ;
+    PAIR
+}
