@@ -1,0 +1,130 @@
+parameter (or
+            (or 
+                (pair %transfer (address :from) (pair (address :to) (nat :value))) 
+                (pair %approve (address :spender) (nat :value)))
+            (or
+                (pair %getAllowance (pair (address :owner) (address :spender)) (contract nat))
+                (or
+                    (pair %getBalance (address :owner) (contract nat))
+                    (pair %getTotalSupply unit (contract nat))))) ;
+storage (pair
+          (big_map %ledger (address :owner)
+                           (pair (nat :balance)
+                                 (map :approvals (address :spender) (nat :value))))
+          (pair (address %admin) (pair (bool %paused) (nat %totalSupply)))) ;
+code {
+  UNPAIR ;
+  IF_LEFT
+      {
+          IF_LEFT
+              {
+                  ## %transfer branch
+                  UNPAPAIR;
+                  DUP ;
+                  SENDER ;
+                  IFCMPEQ
+                      {
+                          ## if sender = from
+                          ## gets ledger
+                          DIP 3 { CAR } ;
+                          DIG 3 ;
+                          ## checks if from is in ledger
+                          DIP { DUP } ;
+                          DUP ;
+                          DIG 3 ;
+                          MEM ;
+                          IF
+                              {
+                                  ## checks if from has enough balance
+                                  DIP { DUP } ;
+                                  DUP ;
+                                  DIG 3 ;
+                                  GET ;
+                                  IF_NONE
+                                      { PUSH string "NOVALUE" ; FAILWITH }
+                                      {
+                                          UNPAIR ;
+                                          DIP 5 { DUP } ;
+                                          DUP ;
+                                          DIG 6 ;
+                                          IFCMPGT
+                                              {
+                                                  ## if transfer value is greater than balance
+                                                  PUSH string "NOTENOUGHFUNDS" ; FAILWITH
+                                              }
+                                              {
+                                                  ## if enough funds
+                                                  ## upadtes from address in ledger
+                                                  DIP 5 { DUP } ;
+                                                  DIG 5 ;
+                                                  SWAP ;
+                                                  SUB ;
+                                                  ABS ;
+                                                  PAIR ;
+                                                  DIG 2 ;
+                                                  DIP { SOME } ;
+                                                  UPDATE ;
+                                                  ## updates to address in ledger
+                                                  DIP 1 { DUP } ;
+                                                  DIG 1 ;
+                                                  DIP { DUP } ;
+                                                  MEM ;
+                                                  IF
+                                                      {
+                                                          ## if to address is ledger
+                                                          ## value must be added to balance
+                                                          DIP { DUP } ;
+                                                          SWAP ;
+                                                          DIP { DUP } ;
+                                                          GET ;
+                                                          IF_NONE
+                                                              {
+                                                                  PUSH string "NOVALUE" ; FAILWITH
+                                                              }
+                                                              {
+                                                                  UNPAIR ;
+                                                                  DIG 4 ;
+                                                                  ADD ;
+                                                                  PAIR ;
+                                                                  SOME ;
+                                                                  DIG 2 ;
+                                                                  UPDATE ;
+                                                              } ;
+                                                      }
+                                                      {
+                                                          ## if to address is not in ledger
+                                                          ## new key/value pair is created with balance
+                                                          DUG 2 ;
+                                                          DIP { PUSH (map address nat) {} ; SWAP ; PAIR ; SOME } ;
+                                                          UPDATE ;
+                                                      } ;
+                                              } ;
+                                      } ;
+                              }
+                              { PUSH string "NOACCOUNT" ; FAILWITH } ;
+                      }
+                      {
+                          ## if sender != from
+                      }
+              }
+              {
+                  ## %approve branch
+              } ;
+              ##NIL operation ;
+      }
+      {
+          IF_LEFT
+              {
+                  ## %getAllowance branch
+              }
+              {
+                  IF_LEFT
+                      {
+                          ##getBalance branch
+                      }
+                      {
+                          ## %getTotalSupply branch
+                      } ;
+              } ;
+      } ;
+}
