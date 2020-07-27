@@ -267,14 +267,59 @@ code {
         IF_LEFT
             {
                 ## %getAllowance branch
+                DIP { DUP ; CAR } ;
+                UNPPAIIR ;
+                DIP { DIG 2 } ;
+                GET ;
+                IF_NONE
+                    { PUSH string "NoAccount" ; FAILWITH }
+                    {
+                        CDR ;
+                        SWAP ;
+                        GET ;
+                        IF_NONE
+                            { PUSH string "NoAllowance" ; FAILWITH }
+                            {
+                                DIP { PUSH mutez 0 } ;
+                                TRANSFER_TOKENS ;
+                                NIL operation ;
+                                SWAP ;
+                                CONS ;
+                                PAIR
+                            }
+                    }
             }
             {
                 IF_LEFT
                     {
                         ##getBalance branch
+                        DIP { DUP ; CAR } ;
+                        UNPAIR ;
+                        DIP { SWAP } ;
+                        GET ;
+                        IF_NONE
+                            { PUSH string "NoAllowance" ; FAILWITH }
+                            {
+                                CAR ;
+                                DIP { PUSH mutez 0 } ;
+                                TRANSFER_TOKENS ;
+                                NIL operation ;
+                                SWAP ;
+                                CONS ;
+                                PAIR
+                            }
                     }
                     {
                         ## %getTotalSupply branch
+                        CDR ;
+                        DIP { DUP ; CDR } ;
+                        SWAP ;
+                        DIP { PUSH mutez 0 } ;
+                        TRANSFER_TOKENS ;
+                        NIL operation ;
+                        SWAP ;
+                        CONS ;
+                        PAIR
                     } ;
             } ;
     } ;
