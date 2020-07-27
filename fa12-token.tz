@@ -21,7 +21,7 @@ code {
                 ## %transfer branch
                 UNPAPAIR;
                 ## gets ledger
-                DIP 3 { CAR } ;
+                DIP 3 { UNPAIR } ;
                 DIG 3 ;
                 ## checks if from is in ledger
                 DIP { DUP } ;
@@ -128,7 +128,11 @@ code {
                                             DUP ;
                                             SENDER ;
                                             IFCMPEQ
-                                                {}
+                                                {
+                                                    ## Stack cleanup
+                                                    SWAP ;
+                                                    DIP { DROP ; DROP } ;
+                                                }
                                                 {
                                                     ## if sender is not owner
                                                     ## gets owner's allowances
@@ -165,6 +169,7 @@ code {
                                                                 }
                                                         }
                                                 } ;
+                                                PAIR ;
                                     } ;
                             } ;
                     }
@@ -173,6 +178,88 @@ code {
             }
             {
                 ## %approve branch
+                SWAP ;
+                UNPAIR ;
+                DIP { DUG 2 } ;
+                DIP { DUP } ;
+                SWAP ;
+                CAR ;
+                SENDER ;
+                IFCMPEQ
+                    { PUSH string "IdenticalSpenderSender" ; FAILWITH }
+                    {} ;
+                DUP ;
+                SENDER ;
+                GET ;
+                IF_NONE
+                    { PUSH string "NoAccount" ; FAILWITH }
+                    {
+                        UNPAIR ;
+                        DUG 3 ;
+                        DIG 2 ;
+                        UNPAIR ;
+                        ## gets current allowance
+                        DIP { SWAP ; DUP } ;
+                        DUP ;
+                        DIP { SWAP } ;
+                        GET ;
+                        IF_NONE
+                            {
+                                ## if there is no approved amount yet
+                                DIP { SWAP } ;
+                                DIP { SOME } ;
+                                UPDATE ;
+                                DIG 2 ;
+                                PAIR ;
+                                SOME ;
+                                SENDER ;
+                                UPDATE ;
+                                SWAP ;
+                                PAIR ;
+                            }
+                            {
+                                ## if there is an approved amount
+                                INT ;
+                                EQ ;
+                                IF
+                                    {
+                                        ## if approved amount is equal to zero
+                                        DIP { SWAP ; SOME } ;
+                                        UPDATE ;
+                                        DIG 2 ;
+                                        PAIR ;
+                                        SOME ;
+                                        SENDER ;
+                                        UPDATE ;
+                                    }
+                                    {
+                                        ## if approved amount is greater than zero
+                                        ## new approved amount must be zero
+                                        DIG 2 ;
+                                        INT ;
+                                        EQ ;
+                                        IF
+                                            {
+                                                ## sets approved amount to zero
+                                                PUSH nat 0 ;
+                                                SOME ;
+                                                SWAP ;
+                                                UPDATE ;
+                                                DIG 2 ;
+                                                PAIR ;
+                                                SOME ;
+                                                SENDER ;
+                                                UPDATE ;
+                                            }
+                                            {
+                                                ## throws error
+                                                PUSH string "UnsafeAllowanceChange" ;
+                                                FAILWITH ;
+                                            }
+                                    }
+                            }
+                    } ;
+                    PAIR ;
             } ;
             ##NIL operation ;
     }
