@@ -7,7 +7,7 @@ parameter
 storage
   (pair (big_map %ledger
            (address :owner)
-           (pair (nat :balance) (map :approvals (address :spender) (nat :value))))
+           (pair (nat :balance) (map :allowances (address :spender) (nat :value))))
         (nat %totalSupply)) ;
 code {
     UNPAIR ;
