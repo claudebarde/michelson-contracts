@@ -1,17 +1,14 @@
-parameter (or
-            (or 
-                (pair %transfer (address :from) (pair (address :to) (nat :value))) 
-                (pair %approve (address :spender) (nat :value)))
-            (or
-                (pair %getAllowance (pair (address :owner) (address :spender)) (contract nat))
-                (or
-                    (pair %getBalance (address :owner) (contract nat))
-                    (pair %getTotalSupply unit (contract nat))))) ;
-storage (pair
-          (big_map %ledger (address :owner)
-                           (pair (nat :balance)
-                                 (map :approvals (address :spender) (nat :value))))
-          (nat %totalSupply)) ;
+parameter
+  (or (or (pair :transfer (address %from) (pair (address %to) (nat %value)))
+          (pair :approve (address %spender) (nat %value)))
+      (or (pair %getAllowance (pair (address :owner) (address :spender)) (contract nat))
+          (or (pair %getBalance (address :owner) (contract nat))
+              (pair %getTotalSupply unit (contract nat))))) ;
+storage
+  (pair (big_map %ledger
+           (address :owner)
+           (pair (nat :balance) (map :approvals (address :spender) (nat :value))))
+        (nat %totalSupply)) ;
 code {
     UNPAIR ;
     IF_LEFT
@@ -180,7 +177,7 @@ code {
                     ## %approve branch
                     SWAP ;
                     UNPAIR ;
-                    DIP { DUG 2 } ;
+                    DIP { SWAP } ;
                     DIP { DUP } ;
                     SWAP ;
                     CAR ;
@@ -214,8 +211,6 @@ code {
                                     SOME ;
                                     SENDER ;
                                     UPDATE ;
-                                    SWAP ;
-                                    PAIR ;
                                 }
                                 {
                                     ## if there is an approved amount
